@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennis Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 4px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      color: #f0c040;
+      text-shadow: 0 0 20px rgba(240,192,64,0.5);
+    }
+
+    #info {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+
+    #game-wrapper {
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      border-radius: 8px;
+      box-shadow: 0 0 40px rgba(0,150,255,0.3), 0 0 80px rgba(0,80,160,0.2);
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.75);
+      border-radius: 8px;
+      gap: 16px;
+    }
+
+    #overlay h2 {
+      font-size: 2.5rem;
+      color: #f0c040;
+      text-shadow: 0 0 20px rgba(240,192,64,0.6);
+    }
+
+    #overlay p {
+      font-size: 1rem;
+      color: #ccc;
+    }
+
+    #startBtn {
+      padding: 12px 36px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #0070f3, #00b4d8);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(0,112,243,0.5);
+    }
+
+    #startBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 28px rgba(0,180,216,0.7);
+    }
+
+    #difficulty {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .diff-btn {
+      padding: 6px 18px;
+      border: 2px solid #555;
+      background: transparent;
+      color: #aaa;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    .diff-btn.active {
+      border-color: #f0c040;
+      color: #f0c040;
+      background: rgba(240,192,64,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎾 Tennis</h1>
+<div id="info">W/S hoặc ↑/↓ để di chuyển &nbsp;|&nbsp; Đánh bại AI!</div>
+
+<div id="game-wrapper">
+  <canvas id="canvas" width="800" height="500"></canvas>
+
+  <div id="overlay">
+    <h2>TENNIS</h2>
+    <p>Chọn độ khó:</p>
+    <div id="difficulty">
+      <button class="diff-btn active" data-speed="3">Dễ</button>
+      <button class="diff-btn" data-speed="5">TB</button>
+      <button class="diff-btn" data-speed="7">Khó</button>
+    </div>
+    <button id="startBtn">BẮT ĐẦU</button>
+    <p style="font-size:0.78rem; color:#666;">Thắng khi đạt 5 điểm &amp; cách biệt 2 bàn · Tối đa 11 điểm</p>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+const overlayTitle = overlay.querySelector('h2');
+
+const W = canvas.width;
+const H = canvas.height;
+const NET_W = 6;
+const PADDLE_W = 14;
+const PADDLE_H = 90;
+const BALL_R = 9;
+const WIN_AT = 5;   // phải đạt ít nhất 5 điểm
+const WIN_LEAD = 2;  // và cách biệt ít nhất 2 bàn
+const MAX_SCORE = 11; // nếu không ai dẫn 2 bàn, ai đạt 11 trước thắng
+
+let aiSpeed = 3;
+
+// --- Difficulty buttons ---
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    aiSpeed = parseInt(btn.dataset.speed);
+  });
+});
+
+// --- Game State ---
+let player, ai, ball, pScore, aScore, running, animId;
+let keys = {};
+
+function initGame() {
+  player = { x: 20, y: H / 2 - PADDLE_H / 2, w: PADDLE_W, h: PADDLE_H, dy: 0 };
+  ai     = { x: W - 20 - PADDLE_W, y: H / 2 - PADDLE_H / 2, w: PADDLE_W, h: PADDLE_H, dy: 0 };
+  pScore = 0;
+  aScore = 0;
+  resetBall(1);
+}
+
+function resetBall(dir) {
+  const angle = (Math.random() * 60 - 30) * (Math.PI / 180);
+  const speed = 5.5;
+  ball = {
+    x: W / 2,
+    y: H / 2,
+    r: BALL_R,
+    vx: Math.cos(angle) * speed * dir,
+    vy: Math.sin(angle) * speed,
+    trail: []
+  };
+}
+
+// --- Input ---
+document.addEventListener('keydown', e => { keys[e.key] = true; e.preventDefault && ['ArrowUp','ArrowDown',' '].includes(e.key) && e.preventDefault(); });
+document.addEventListener('keyup',  e => { keys[e.key] = false; });
+
+function handleInput() {
+  const spd = 7;
+  if ((keys['w'] || keys['W'] || keys['ArrowUp']) && player.y > 0)
+    player.y -= spd;
+  if ((keys['s'] || keys['S'] || keys['ArrowDown']) && player.y + player.h < H)
+    player.y += spd;
+}
+
+// --- AI ---
+function moveAI() {
+  const center = ai.y + ai.h / 2;
+  const target  = ball.y;
+  // Add slight imperfection based on difficulty
+  const err = aiSpeed === 3 ? (Math.random() - 0.5) * 40 : aiSpeed === 5 ? (Math.random() - 0.5) * 20 : 0;
+  if (center < target + err - 4) ai.y += aiSpeed;
+  else if (center > target + err + 4) ai.y -= aiSpeed;
+  ai.y = Math.max(0, Math.min(H - ai.h, ai.y));
+}
+
+// --- Collision ---
+function rectBall(p) {
+  return ball.x - ball.r < p.x + p.w &&
+         ball.x + ball.r > p.x &&
+         ball.y - ball.r < p.y + p.h &&
+         ball.y + ball.r > p.y;
+}
+
+function handleCollisions() {
+  // Top/bottom walls
+  if (ball.y - ball.r <= 0) { ball.y = ball.r; ball.vy *= -1; }
+  if (ball.y + ball.r >= H) { ball.y = H - ball.r; ball.vy *= -1; }
+
+  // Player paddle
+  if (rectBall(player) && ball.vx < 0) {
+    ball.x = player.x + player.w + ball.r;
+    const hit = (ball.y - (player.y + player.h / 2)) / (player.h / 2);
+    const angle = hit * 60 * (Math.PI / 180);
+    const spd = Math.min(Math.hypot(ball.vx, ball.vy) + 0.3, 14);
+    ball.vx =  Math.cos(angle) * spd;
+    ball.vy =  Math.sin(angle) * spd;
+  }
+
+  // AI paddle
+  if (rectBall(ai) && ball.vx > 0) {
+    ball.x = ai.x - ball.r;
+    const hit = (ball.y - (ai.y + ai.h / 2)) / (ai.h / 2);
+    const angle = hit * 60 * (Math.PI / 180);
+    const spd = Math.min(Math.hypot(ball.vx, ball.vy) + 0.3, 14);
+    ball.vx = -Math.cos(angle) * spd;
+    ball.vy =  Math.sin(angle) * spd;
+  }
+
+  // Score
+  if (ball.x - ball.r < 0) {
+    aScore++;
+    if (checkWin()) return;
+    resetBall(1);
+  }
+  if (ball.x + ball.r > W) {
+    pScore++;
+    if (checkWin()) return;
+    resetBall(-1);
+  }
+}
+
+function checkWin() {
+  const maxScore = Math.max(pScore, aScore);
+  const diff = Math.abs(pScore - aScore);
+
+  // Thắng khi: đạt >= 5 điểm VÀ cách biệt >= 2 bàn
+  // HOẶC: ai đạt 11 trước thắng (không cần cách biệt)
+  const normalWin = maxScore >= WIN_AT && diff >= WIN_LEAD;
+  const capWin    = maxScore >= MAX_SCORE;
+
+  if (normalWin || capWin) {
+    running = false;
+    const playerWon = pScore > aScore;
+    const winner = playerWon ? '🏆 BẠN THẮNG!' : '🤖 AI THẮNG!';
+    overlayTitle.textContent = winner;
+    overlayTitle.style.color = playerWon ? '#4ade80' : '#f87171';
+    overlay.querySelector('p').textContent = `Tỉ số: ${pScore} – ${aScore}`;
+    startBtn.textContent = 'CHƠI LẠI';
+    overlay.style.display = 'flex';
+    return true;
+  }
+  return false;
+}
+
+// --- Draw ---
+function drawCourt() {
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0,   '#0d3b1e');
+  grad.addColorStop(0.5, '#145a32');
+  grad.addColorStop(1,   '#0d3b1e');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Court lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 2;
+  // Outer boundary
+  ctx.strokeRect(30, 30, W - 60, H - 60);
+  // Service boxes
+  ctx.beginPath();
+  ctx.moveTo(30, H / 2); ctx.lineTo(W - 30, H / 2); // middle horizontal
+  ctx.moveTo(W / 2, 30); ctx.lineTo(W / 2, H - 30); // center vertical (service)
+  ctx.stroke();
+
+  // Net
+  const netGrad = ctx.createLinearGradient(W/2 - NET_W/2, 0, W/2 + NET_W/2, 0);
+  netGrad.addColorStop(0, 'rgba(255,255,255,0.6)');
+  netGrad.addColorStop(1, 'rgba(255,255,255,0.3)');
+  ctx.fillStyle = netGrad;
+  ctx.fillRect(W / 2 - NET_W / 2, 0, NET_W, H);
+
+  // Net pattern
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < H; y += 18) {
+    ctx.beginPath();
+    ctx.moveTo(W/2 - NET_W/2, y);
+    ctx.lineTo(W/2 + NET_W/2, y);
+    ctx.stroke();
+  }
+}
+
+function drawPaddle(p, color1, color2) {
+  const grad = ctx.createLinearGradient(p.x, p.y, p.x + p.w, p.y);
+  grad.addColorStop(0, color1);
+  grad.addColorStop(1, color2);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(p.x, p.y, p.w, p.h, 5);
+  ctx.fill();
+  // Shine
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  ctx.roundRect(p.x + 2, p.y + 4, p.w - 4, p.h / 3, 3);
+  ctx.fill();
+}
+
+function drawBall() {
+  // Trail
+  ball.trail.push({ x: ball.x, y: ball.y });
+  if (ball.trail.length > 8) ball.trail.shift();
+  ball.trail.forEach((t, i) => {
+    const alpha = (i / ball.trail.length) * 0.4;
+    const r = ball.r * (i / ball.trail.length) * 0.8;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,220,50,${alpha})`;
+    ctx.fill();
+  });
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(ball.x, ball.y + ball.r + 2, ball.r * 0.8, 3, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fill();
+
+  // Ball
+  const bGrad = ctx.createRadialGradient(ball.x - 2, ball.y - 3, 1, ball.x, ball.y, ball.r);
+  bGrad.addColorStop(0, '#fff');
+  bGrad.addColorStop(0.4, '#c8e600');
+  bGrad.addColorStop(1, '#6b8e00');
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fillStyle = bGrad;
+  ctx.fill();
+
+  // Seam
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r * 0.65, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+}
+
+function drawScore() {
+  ctx.textAlign = 'center';
+
+  // Player score
+  ctx.font = 'bold 52px Segoe UI';
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillText(pScore, W / 4, 72);
+
+  // AI score
+  ctx.fillStyle = 'rgba(255,100,100,0.9)';
+  ctx.fillText(aScore, (3 * W) / 4, 72);
+
+  // Labels
+  ctx.font = '13px Segoe UI';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText('BẠN', W / 4, 92);
+  ctx.fillText('AI', (3 * W) / 4, 92);
+}
+
+// --- Game Loop ---
+function update() {
+  handleInput();
+  moveAI();
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  handleCollisions();
+}
+
+function draw() {
+  drawCourt();
+  drawPaddle(player, '#00b4d8', '#0077b6');
+  drawPaddle(ai,     '#ef233c', '#b5002e');
+  drawBall();
+  drawScore();
+}
+
+function loop() {
+  if (!running) return;
+  update();
+  draw();
+  animId = requestAnimationFrame(loop);
+}
+
+// --- Start ---
+startBtn.addEventListener('click', () => {
+  overlay.style.display = 'none';
+  overlayTitle.textContent = 'TENNIS';
+  overlayTitle.style.color = '#f0c040';
+  overlay.querySelector('p').textContent = 'Chọn độ khó:';
+  startBtn.textContent = 'BẮT ĐẦU';
+  initGame();
+  running = true;
+  if (animId) cancelAnimationFrame(animId);
+  loop();
+});
+</script>
+</body>
+</html>

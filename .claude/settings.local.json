@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open /Users/doanhoainam/test/tennis.html)",
+      "Bash(gh auth:*)",
+      "Bash(git --version)",
+      "Bash(brew --version)",
+      "Bash(brew install:*)"
+    ]
+  }
+}
