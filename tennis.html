@@ -4,47 +4,205 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tennis Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: #1a1a2e;
+      background: #060818;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
       color: #fff;
       overflow: hidden;
+      user-select: none;
     }
 
-    h1 {
-      font-size: 2rem;
-      letter-spacing: 4px;
-      margin-bottom: 12px;
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,80,180,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    @keyframes gridMove {
+      0%   { background-position: 0 0, 0 0; }
+      100% { background-position: 40px 40px, 40px 40px; }
+    }
+
+    /* ── LOGO ── */
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: 8px;
       text-transform: uppercase;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 16px rgba(0,210,255,0.5));
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── SCOREBOARD ── */
+    .scoreboard {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 14px;
+      width: 800px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .score-side {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 20px;
+    }
+
+    .score-side.player {
+      border-radius: 12px 0 0 12px;
+      border-right: none;
+      justify-content: flex-start;
+    }
+
+    .score-side.ai-side {
+      border-radius: 0 12px 12px 0;
+      border-left: none;
+      justify-content: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .score-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 900;
+      line-height: 1;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .score-side.player .score-num { color: #00d2ff; text-shadow: 0 0 20px rgba(0,210,255,0.7); }
+    .score-side.ai-side .score-num { color: #ff4d6d; text-shadow: 0 0 20px rgba(255,77,109,0.7); }
+
+    .score-info { display: flex; flex-direction: column; gap: 5px; }
+
+    .score-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+
+    .score-pips {
+      display: flex;
+      gap: 5px;
+    }
+
+    .pip {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      transition: all 0.3s;
+    }
+
+    .score-side.player .pip.filled {
+      background: #00d2ff;
+      border-color: #00d2ff;
+      box-shadow: 0 0 8px rgba(0,210,255,0.8);
+    }
+
+    .score-side.ai-side .pip.filled {
+      background: #ff4d6d;
+      border-color: #ff4d6d;
+      box-shadow: 0 0 8px rgba(255,77,109,0.8);
+    }
+
+    .score-divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.06);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      gap: 4px;
+    }
+
+    .score-divider span {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      opacity: 0.4;
+    }
+
+    .score-divider .vs {
+      font-size: 0.9rem;
+      font-weight: 700;
       color: #f0c040;
-      text-shadow: 0 0 20px rgba(240,192,64,0.5);
+      text-shadow: 0 0 12px rgba(240,192,64,0.5);
+      opacity: 1;
     }
 
-    #info {
-      font-size: 0.85rem;
-      color: #aaa;
-      margin-bottom: 16px;
-      letter-spacing: 1px;
-    }
-
+    /* ── CANVAS WRAPPER ── */
     #game-wrapper {
       position: relative;
+      z-index: 1;
     }
 
     canvas {
       display: block;
-      border-radius: 8px;
-      box-shadow: 0 0 40px rgba(0,150,255,0.3), 0 0 80px rgba(0,80,160,0.2);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow:
+        0 0 0 1px rgba(0,210,255,0.1),
+        0 0 40px rgba(0,120,255,0.2),
+        0 0 80px rgba(0,60,160,0.15),
+        0 20px 60px rgba(0,0,0,0.5);
     }
 
+    /* ── CONTROLS HINT ── */
+    .hint {
+      margin-top: 14px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hint span { color: rgba(255,255,255,0.45); }
+
+    /* ── OVERLAY ── */
     #overlay {
       position: absolute;
       inset: 0;
@@ -52,107 +210,184 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.75);
-      border-radius: 8px;
-      gap: 16px;
+      background: rgba(6,8,24,0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      gap: 20px;
+    }
+
+    #overlay-icon {
+      font-size: 3.5rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 20px rgba(240,192,64,0.5));
     }
 
     #overlay h2 {
-      font-size: 2.5rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 4px;
       color: #f0c040;
-      text-shadow: 0 0 20px rgba(240,192,64,0.6);
+      text-shadow: 0 0 30px rgba(240,192,64,0.6);
     }
 
-    #overlay p {
-      font-size: 1rem;
-      color: #ccc;
+    .overlay-rule {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 1.5px;
+      text-align: center;
     }
 
-    #startBtn {
-      padding: 12px 36px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-      background: linear-gradient(135deg, #0070f3, #00b4d8);
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.2s;
-      box-shadow: 0 4px 20px rgba(0,112,243,0.5);
+    #overlay-score {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 6px;
+      display: none;
     }
 
-    #startBtn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 28px rgba(0,180,216,0.7);
+    /* Difficulty selector */
+    .diff-label {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
     }
 
     #difficulty {
       display: flex;
-      gap: 10px;
-      margin-top: 4px;
+      gap: 8px;
     }
 
     .diff-btn {
-      padding: 6px 18px;
-      border: 2px solid #555;
-      background: transparent;
-      color: #aaa;
-      border-radius: 4px;
+      padding: 8px 22px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.4);
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 0.85rem;
-      letter-spacing: 1px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 2px;
       transition: all 0.2s;
+      text-transform: uppercase;
     }
+
+    .diff-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); }
 
     .diff-btn.active {
       border-color: #f0c040;
       color: #f0c040;
-      background: rgba(240,192,64,0.1);
+      background: rgba(240,192,64,0.08);
+      box-shadow: 0 0 16px rgba(240,192,64,0.2);
     }
+
+    /* Start button */
+    #startBtn {
+      padding: 14px 48px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #0070f3, #00b4d8);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 24px rgba(0,112,243,0.4), 0 0 0 1px rgba(0,180,216,0.2);
+      text-transform: uppercase;
+    }
+
+    #startBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,150,255,0.5), 0 0 0 1px rgba(0,180,216,0.4);
+    }
+
+    #startBtn:active { transform: translateY(0); }
   </style>
 </head>
 <body>
 
-<h1>🎾 Tennis</h1>
-<div id="info">W/S hoặc ↑/↓ để di chuyển &nbsp;|&nbsp; Đánh bại AI!</div>
+<div class="logo">🎾 Tennis</div>
 
-<div id="game-wrapper">
-  <canvas id="canvas" width="800" height="500"></canvas>
-
-  <div id="overlay">
-    <h2>TENNIS</h2>
-    <p>Chọn độ khó:</p>
-    <div id="difficulty">
-      <button class="diff-btn active" data-speed="3">Dễ</button>
-      <button class="diff-btn" data-speed="5">TB</button>
-      <button class="diff-btn" data-speed="7">Khó</button>
+<!-- Scoreboard -->
+<div class="scoreboard">
+  <div class="score-side player">
+    <div class="score-num" id="p-score">0</div>
+    <div class="score-info">
+      <div class="score-label">Bạn</div>
+      <div class="score-pips" id="p-pips"></div>
     </div>
-    <button id="startBtn">BẮT ĐẦU</button>
-    <p style="font-size:0.78rem; color:#666;">Thắng khi đạt 5 điểm &amp; cách biệt 2 bàn · Tối đa 11 điểm</p>
+  </div>
+  <div class="score-divider">
+    <span>SCORE</span>
+    <span class="vs">VS</span>
+    <span>SCORE</span>
+  </div>
+  <div class="score-side ai-side">
+    <div class="score-num" id="a-score">0</div>
+    <div class="score-info">
+      <div class="score-label">AI</div>
+      <div class="score-pips" id="a-pips"></div>
+    </div>
   </div>
 </div>
 
+<div id="game-wrapper">
+  <canvas id="canvas" width="800" height="480"></canvas>
+
+  <div id="overlay">
+    <div id="overlay-icon">🎾</div>
+    <h2 id="overlay-title">TENNIS</h2>
+    <div id="overlay-score"></div>
+    <div class="diff-label">Chọn độ khó</div>
+    <div id="difficulty">
+      <button class="diff-btn active" data-speed="3">Dễ</button>
+      <button class="diff-btn" data-speed="5">Trung bình</button>
+      <button class="diff-btn" data-speed="7">Khó</button>
+    </div>
+    <button id="startBtn">Bắt đầu</button>
+    <div class="overlay-rule">Thắng khi đạt 5 điểm &amp; cách biệt 3 bàn · Mốc tối đa 11 điểm</div>
+  </div>
+</div>
+
+<div class="hint"><span>W / S</span> hoặc <span>↑ / ↓</span> &nbsp;·&nbsp; Di chuyển vợt</div>
+
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const canvas  = document.getElementById('canvas');
+const ctx     = canvas.getContext('2d');
 const overlay = document.getElementById('overlay');
-const startBtn = document.getElementById('startBtn');
-const overlayTitle = overlay.querySelector('h2');
+const startBtn        = document.getElementById('startBtn');
+const overlayTitle    = document.getElementById('overlay-title');
+const overlayScore    = document.getElementById('overlay-score');
+const overlayIcon     = document.getElementById('overlay-icon');
+const difficultyDiv   = document.getElementById('difficulty');
+const diffLabel       = overlay.querySelector('.diff-label');
+const overlayRule     = overlay.querySelector('.overlay-rule');
+const pScoreEl        = document.getElementById('p-score');
+const aScoreEl        = document.getElementById('a-score');
+const pPipsEl         = document.getElementById('p-pips');
+const aPipsEl         = document.getElementById('a-pips');
 
 const W = canvas.width;
 const H = canvas.height;
-const NET_W = 6;
-const PADDLE_W = 14;
-const PADDLE_H = 90;
-const BALL_R = 9;
-const WIN_AT = 5;   // phải đạt ít nhất 5 điểm
-const WIN_LEAD = 3;  // và cách biệt ít nhất 3 bàn
-const MAX_SCORE = 11; // nếu không ai dẫn 2 bàn, ai đạt 11 trước thắng
+const NET_W    = 5;
+const PADDLE_W = 13;
+const PADDLE_H = 88;
+const BALL_R   = 9;
+const WIN_AT   = 5;
+const WIN_LEAD = 3;
+const MAX_SCORE = 11;
 
 let aiSpeed = 3;
+let player, ai, ball, pScore, aScore, running, animId;
+let keys = {};
+let flashTimer = 0; // for score flash
 
-// --- Difficulty buttons ---
+// ── Difficulty ──
 document.querySelectorAll('.diff-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
@@ -161,55 +396,66 @@ document.querySelectorAll('.diff-btn').forEach(btn => {
   });
 });
 
-// --- Game State ---
-let player, ai, ball, pScore, aScore, running, animId;
-let keys = {};
+// ── Scoreboard UI ──
+function buildPips(el, filled, total) {
+  el.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'pip' + (i < filled ? ' filled' : '');
+    el.appendChild(d);
+  }
+}
 
+function updateScoreUI() {
+  pScoreEl.textContent = pScore;
+  aScoreEl.textContent = aScore;
+  buildPips(pPipsEl, pScore, WIN_AT);
+  buildPips(aPipsEl, aScore, WIN_AT);
+}
+
+// ── Init ──
 function initGame() {
-  player = { x: 20, y: H / 2 - PADDLE_H / 2, w: PADDLE_W, h: PADDLE_H, dy: 0 };
-  ai     = { x: W - 20 - PADDLE_W, y: H / 2 - PADDLE_H / 2, w: PADDLE_W, h: PADDLE_H, dy: 0 };
-  pScore = 0;
-  aScore = 0;
+  player = { x: 22, y: H/2 - PADDLE_H/2, w: PADDLE_W, h: PADDLE_H };
+  ai     = { x: W - 22 - PADDLE_W, y: H/2 - PADDLE_H/2, w: PADDLE_W, h: PADDLE_H };
+  pScore = 0; aScore = 0;
+  updateScoreUI();
   resetBall(1);
 }
 
 function resetBall(dir) {
-  const angle = (Math.random() * 60 - 30) * (Math.PI / 180);
+  const angle = (Math.random() * 50 - 25) * (Math.PI / 180);
   const speed = 5.5;
   ball = {
-    x: W / 2,
-    y: H / 2,
-    r: BALL_R,
+    x: W/2, y: H/2, r: BALL_R,
     vx: Math.cos(angle) * speed * dir,
     vy: Math.sin(angle) * speed,
-    trail: []
+    trail: [], spin: 0
   };
 }
 
-// --- Input ---
-document.addEventListener('keydown', e => { keys[e.key] = true; e.preventDefault && ['ArrowUp','ArrowDown',' '].includes(e.key) && e.preventDefault(); });
-document.addEventListener('keyup',  e => { keys[e.key] = false; });
+// ── Input ──
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (['ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
 
 function handleInput() {
   const spd = 7;
-  if ((keys['w'] || keys['W'] || keys['ArrowUp']) && player.y > 0)
-    player.y -= spd;
-  if ((keys['s'] || keys['S'] || keys['ArrowDown']) && player.y + player.h < H)
-    player.y += spd;
+  if ((keys['w'] || keys['W'] || keys['ArrowUp'])    && player.y > 0)          player.y -= spd;
+  if ((keys['s'] || keys['S'] || keys['ArrowDown'])  && player.y + player.h < H) player.y += spd;
 }
 
-// --- AI ---
+// ── AI ──
 function moveAI() {
   const center = ai.y + ai.h / 2;
-  const target  = ball.y;
-  // Add slight imperfection based on difficulty
-  const err = aiSpeed === 3 ? (Math.random() - 0.5) * 40 : aiSpeed === 5 ? (Math.random() - 0.5) * 20 : 0;
-  if (center < target + err - 4) ai.y += aiSpeed;
-  else if (center > target + err + 4) ai.y -= aiSpeed;
+  const err = aiSpeed === 3 ? (Math.random()-0.5)*50 : aiSpeed === 5 ? (Math.random()-0.5)*22 : 0;
+  if (center < ball.y + err - 4) ai.y += aiSpeed;
+  else if (center > ball.y + err + 4) ai.y -= aiSpeed;
   ai.y = Math.max(0, Math.min(H - ai.h, ai.y));
 }
 
-// --- Collision ---
+// ── Collision ──
 function rectBall(p) {
   return ball.x - ball.r < p.x + p.w &&
          ball.x + ball.r > p.x &&
@@ -218,38 +464,36 @@ function rectBall(p) {
 }
 
 function handleCollisions() {
-  // Top/bottom walls
-  if (ball.y - ball.r <= 0) { ball.y = ball.r; ball.vy *= -1; }
-  if (ball.y + ball.r >= H) { ball.y = H - ball.r; ball.vy *= -1; }
+  if (ball.y - ball.r <= 0)  { ball.y = ball.r;      ball.vy *= -1; }
+  if (ball.y + ball.r >= H)  { ball.y = H - ball.r;  ball.vy *= -1; }
 
-  // Player paddle
   if (rectBall(player) && ball.vx < 0) {
     ball.x = player.x + player.w + ball.r;
-    const hit = (ball.y - (player.y + player.h / 2)) / (player.h / 2);
-    const angle = hit * 60 * (Math.PI / 180);
-    const spd = Math.min(Math.hypot(ball.vx, ball.vy) + 0.3, 14);
+    const hit = (ball.y - (player.y + player.h/2)) / (player.h/2);
+    const angle = hit * 58 * (Math.PI/180);
+    const spd = Math.min(Math.hypot(ball.vx, ball.vy) + 0.35, 15);
     ball.vx =  Math.cos(angle) * spd;
     ball.vy =  Math.sin(angle) * spd;
+    ball.spin = hit * 3;
   }
 
-  // AI paddle
   if (rectBall(ai) && ball.vx > 0) {
     ball.x = ai.x - ball.r;
-    const hit = (ball.y - (ai.y + ai.h / 2)) / (ai.h / 2);
-    const angle = hit * 60 * (Math.PI / 180);
-    const spd = Math.min(Math.hypot(ball.vx, ball.vy) + 0.3, 14);
+    const hit = (ball.y - (ai.y + ai.h/2)) / (ai.h/2);
+    const angle = hit * 58 * (Math.PI/180);
+    const spd = Math.min(Math.hypot(ball.vx, ball.vy) + 0.35, 15);
     ball.vx = -Math.cos(angle) * spd;
     ball.vy =  Math.sin(angle) * spd;
+    ball.spin = -hit * 3;
   }
 
-  // Score
   if (ball.x - ball.r < 0) {
-    aScore++;
+    aScore++; updateScoreUI(); flashTimer = 20;
     if (checkWin()) return;
     resetBall(1);
   }
   if (ball.x + ball.r > W) {
-    pScore++;
+    pScore++; updateScoreUI(); flashTimer = 20;
     if (checkWin()) return;
     resetBall(-1);
   }
@@ -257,154 +501,190 @@ function handleCollisions() {
 
 function checkWin() {
   const maxScore = Math.max(pScore, aScore);
-  const diff = Math.abs(pScore - aScore);
-
-  // Thắng khi: đạt >= 5 điểm VÀ cách biệt >= 2 bàn
-  // HOẶC: ai đạt 11 trước thắng (không cần cách biệt)
+  const diff     = Math.abs(pScore - aScore);
   const normalWin = maxScore >= WIN_AT && diff >= WIN_LEAD;
   const capWin    = maxScore >= MAX_SCORE;
+  if (!normalWin && !capWin) return false;
 
-  if (normalWin || capWin) {
-    running = false;
-    const playerWon = pScore > aScore;
-    const winner = playerWon ? '🏆 BẠN THẮNG!' : '🤖 AI THẮNG!';
-    overlayTitle.textContent = winner;
-    overlayTitle.style.color = playerWon ? '#4ade80' : '#f87171';
-    overlay.querySelector('p').textContent = `Tỉ số: ${pScore} – ${aScore}`;
-    startBtn.textContent = 'CHƠI LẠI';
-    overlay.style.display = 'flex';
-    return true;
-  }
-  return false;
+  running = false;
+  const playerWon = pScore > aScore;
+
+  overlayIcon.textContent   = playerWon ? '🏆' : '🤖';
+  overlayTitle.textContent  = playerWon ? 'BẠN THẮNG!' : 'AI THẮNG!';
+  overlayTitle.style.color  = playerWon ? '#4ade80' : '#ff4d6d';
+  overlayTitle.style.textShadow = playerWon
+    ? '0 0 30px rgba(74,222,128,0.6)'
+    : '0 0 30px rgba(255,77,109,0.6)';
+
+  overlayScore.style.display = 'block';
+  overlayScore.textContent   = `${pScore}  –  ${aScore}`;
+  overlayScore.style.color   = playerWon ? '#4ade80' : '#ff4d6d';
+
+  diffLabel.style.display    = 'block';
+  difficultyDiv.style.display = 'flex';
+  overlayRule.style.display  = 'block';
+  startBtn.textContent       = 'Chơi lại';
+  overlay.style.display      = 'flex';
+  return true;
 }
 
-// --- Draw ---
+// ── Draw ──
+let bgOffset = 0;
+
 function drawCourt() {
-  // Background
+  // Court surface
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0,   '#0d3b1e');
-  grad.addColorStop(0.5, '#145a32');
-  grad.addColorStop(1,   '#0d3b1e');
+  grad.addColorStop(0,   '#0a2540');
+  grad.addColorStop(0.5, '#0d3060');
+  grad.addColorStop(1,   '#0a2540');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  // Court lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  // Subtle vignette
+  const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.9);
+  vig.addColorStop(0, 'transparent');
+  vig.addColorStop(1, 'rgba(0,0,0,0.35)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+
+  // Court lines - outer boundary
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
   ctx.lineWidth = 2;
-  // Outer boundary
-  ctx.strokeRect(30, 30, W - 60, H - 60);
-  // Service boxes
+  ctx.strokeRect(28, 28, W - 56, H - 56);
+
+  // Baseline extensions (thick)
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(30, H / 2); ctx.lineTo(W - 30, H / 2); // middle horizontal
-  ctx.moveTo(W / 2, 30); ctx.lineTo(W / 2, H - 30); // center vertical (service)
+  ctx.moveTo(28, 28);    ctx.lineTo(28, H - 28);
+  ctx.moveTo(W-28, 28);  ctx.lineTo(W-28, H-28);
   ctx.stroke();
+
+  // Service lines
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  ctx.beginPath();
+  ctx.moveTo(28, H/2);    ctx.lineTo(W-28, H/2);  // center horizontal
+  ctx.moveTo(W/2, 28);    ctx.lineTo(W/2, H-28);  // center vertical
+  ctx.moveTo(W*0.18, 28); ctx.lineTo(W*0.18, H-28); // left service
+  ctx.moveTo(W*0.82, 28); ctx.lineTo(W*0.82, H-28); // right service
+  ctx.stroke();
+
+  // Center mark
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W/2 - 10, H/2); ctx.lineTo(W/2 + 10, H/2);
+  ctx.stroke();
+
+  // Net post caps
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillRect(W/2 - NET_W/2 - 2, 0, NET_W + 4, 6);
+  ctx.fillRect(W/2 - NET_W/2 - 2, H - 6, NET_W + 4, 6);
 
   // Net
   const netGrad = ctx.createLinearGradient(W/2 - NET_W/2, 0, W/2 + NET_W/2, 0);
-  netGrad.addColorStop(0, 'rgba(255,255,255,0.6)');
-  netGrad.addColorStop(1, 'rgba(255,255,255,0.3)');
+  netGrad.addColorStop(0, 'rgba(255,255,255,0.55)');
+  netGrad.addColorStop(1, 'rgba(255,255,255,0.25)');
   ctx.fillStyle = netGrad;
-  ctx.fillRect(W / 2 - NET_W / 2, 0, NET_W, H);
+  ctx.fillRect(W/2 - NET_W/2, 0, NET_W, H);
 
-  // Net pattern
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  // Net mesh lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
-  for (let y = 0; y < H; y += 18) {
+  for (let y = 0; y < H; y += 16) {
     ctx.beginPath();
-    ctx.moveTo(W/2 - NET_W/2, y);
-    ctx.lineTo(W/2 + NET_W/2, y);
+    ctx.moveTo(W/2 - NET_W/2, y); ctx.lineTo(W/2 + NET_W/2, y);
     ctx.stroke();
+  }
+
+  // Score flash highlight
+  if (flashTimer > 0) {
+    const alpha = (flashTimer / 20) * 0.08;
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fillRect(0, 0, W, H);
+    flashTimer--;
   }
 }
 
-function drawPaddle(p, color1, color2) {
-  const grad = ctx.createLinearGradient(p.x, p.y, p.x + p.w, p.y);
-  grad.addColorStop(0, color1);
-  grad.addColorStop(1, color2);
+function drawPaddle(p, isPlayer) {
+  const x = p.x, y = p.y, w = p.w, h = p.h;
+  const color = isPlayer ? '#00d2ff' : '#ff4d6d';
+  const colorDark = isPlayer ? '#0077b6' : '#b5002e';
+
+  // Glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 20;
+
+  const grad = ctx.createLinearGradient(x, y, x + w, y);
+  grad.addColorStop(0, color);
+  grad.addColorStop(1, colorDark);
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.roundRect(p.x, p.y, p.w, p.h, 5);
+  ctx.roundRect(x, y, w, h, 6);
   ctx.fill();
-  // Shine
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+
+  ctx.shadowBlur = 0;
+
+  // Inner highlight
+  const hl = ctx.createLinearGradient(x, y, x, y + h/2);
+  hl.addColorStop(0, 'rgba(255,255,255,0.25)');
+  hl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = hl;
   ctx.beginPath();
-  ctx.roundRect(p.x + 2, p.y + 4, p.w - 4, p.h / 3, 3);
+  ctx.roundRect(x + 2, y + 3, w - 4, h/2, 4);
   ctx.fill();
 }
 
 function drawBall() {
   // Trail
   ball.trail.push({ x: ball.x, y: ball.y });
-  if (ball.trail.length > 8) ball.trail.shift();
+  if (ball.trail.length > 10) ball.trail.shift();
   ball.trail.forEach((t, i) => {
-    const alpha = (i / ball.trail.length) * 0.4;
-    const r = ball.r * (i / ball.trail.length) * 0.8;
+    const p = i / ball.trail.length;
     ctx.beginPath();
-    ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255,220,50,${alpha})`;
+    ctx.arc(t.x, t.y, ball.r * p * 0.75, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(200,230,0,${p * 0.35})`;
     ctx.fill();
   });
 
-  // Shadow
-  ctx.beginPath();
-  ctx.ellipse(ball.x, ball.y + ball.r + 2, ball.r * 0.8, 3, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fill();
+  // Glow
+  ctx.shadowColor = 'rgba(200,230,0,0.9)';
+  ctx.shadowBlur = 18;
 
   // Ball
-  const bGrad = ctx.createRadialGradient(ball.x - 2, ball.y - 3, 1, ball.x, ball.y, ball.r);
-  bGrad.addColorStop(0, '#fff');
-  bGrad.addColorStop(0.4, '#c8e600');
-  bGrad.addColorStop(1, '#6b8e00');
+  const bg = ctx.createRadialGradient(ball.x-3, ball.y-3, 1, ball.x, ball.y, ball.r);
+  bg.addColorStop(0, '#ffffff');
+  bg.addColorStop(0.35, '#d4f000');
+  bg.addColorStop(1, '#7a9600');
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-  ctx.fillStyle = bGrad;
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+  ctx.fillStyle = bg;
   ctx.fill();
 
+  ctx.shadowBlur = 0;
+
   // Seam
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.r * 0.65, 0.2, Math.PI - 0.2);
+  ctx.arc(ball.x, ball.y, ball.r * 0.6, 0.3, Math.PI - 0.3);
   ctx.stroke();
 }
 
-function drawScore() {
-  ctx.textAlign = 'center';
-
-  // Player score
-  ctx.font = 'bold 52px Segoe UI';
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.fillText(pScore, W / 4, 72);
-
-  // AI score
-  ctx.fillStyle = 'rgba(255,100,100,0.9)';
-  ctx.fillText(aScore, (3 * W) / 4, 72);
-
-  // Labels
-  ctx.font = '13px Segoe UI';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fillText('BẠN', W / 4, 92);
-  ctx.fillText('AI', (3 * W) / 4, 92);
-}
-
-// --- Game Loop ---
+// ── Loop ──
 function update() {
   handleInput();
   moveAI();
-
   ball.x += ball.vx;
   ball.y += ball.vy;
-
   handleCollisions();
 }
 
 function draw() {
   drawCourt();
-  drawPaddle(player, '#00b4d8', '#0077b6');
-  drawPaddle(ai,     '#ef233c', '#b5002e');
+  drawPaddle(player, true);
+  drawPaddle(ai, false);
   drawBall();
-  drawScore();
 }
 
 function loop() {
@@ -414,13 +694,18 @@ function loop() {
   animId = requestAnimationFrame(loop);
 }
 
-// --- Start ---
+// ── Start ──
 startBtn.addEventListener('click', () => {
-  overlay.style.display = 'none';
+  overlayIcon.textContent  = '🎾';
   overlayTitle.textContent = 'TENNIS';
   overlayTitle.style.color = '#f0c040';
-  overlay.querySelector('p').textContent = 'Chọn độ khó:';
-  startBtn.textContent = 'BẮT ĐẦU';
+  overlayTitle.style.textShadow = '0 0 30px rgba(240,192,64,0.6)';
+  overlayScore.style.display = 'none';
+  diffLabel.style.display    = 'block';
+  difficultyDiv.style.display = 'flex';
+  overlayRule.style.display  = 'block';
+  overlay.style.display = 'none';
+  startBtn.textContent = 'Bắt đầu';
   initGame();
   running = true;
   if (animId) cancelAnimationFrame(animId);
